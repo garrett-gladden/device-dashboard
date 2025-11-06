@@ -999,28 +999,18 @@
                 <div className="dashboard">
                     <div className="header">
                         <div className="logo-section">
-                            <svg
+                            <img
                                 className="logo"
-                                viewBox="0 0 320 40"
-                                role="img"
-                                aria-label="Kollective logo"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <title>Kollective</title>
-                                <g fill="none" fillRule="evenodd">
-                                    <circle cx="18" cy="20" r="16" fill="#5398D2" />
-                                    <text
-                                        x="44"
-                                        y="26"
-                                        fontFamily="Segoe UI, Roboto, Arial, sans-serif"
-                                        fontSize="16"
-                                        fontWeight="700"
-                                        fill="#FFFFFF"
-                                    >
-                                        Kollective
-                                    </text>
-                                </g>
-                            </svg>
+                                src="https://kollective.com/wp-content/uploads/2025/02/NEWEST-KOLLECTIVE-LOGO_for-dark-c00132.svg"
+                                alt="Kollective"
+                                onError={(e) => {
+                                    // hide broken image and insert a simple inline SVG fallback
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
+                                    const svg = '<svg class="logo" viewBox="0 0 320 40" role="img" xmlns="http://www.w3.org/2000/svg"><title>Kollective</title><g fill="none" fill-rule="evenodd"><circle cx="18" cy="20" r="16" fill="#5398D2"/><text x="44" y="26" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">Kollective</text></g></svg>';
+                                    e.target.insertAdjacentHTML('afterend', svg);
+                                }}
+                            />
                              <div>
                                  <div className="title">Teams Call Quality Analytics</div>
                                  <div className="subtitle">Microsoft Graph API Performance Dashboard</div>
