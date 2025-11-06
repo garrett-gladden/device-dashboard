@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams Call Quality Analytics - Kollective</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1d35 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        :root {
+            --kollective-blue: #5398D2;
+            --kollective-blue-dark: #3d7fb5;
+            --kollective-blue-light: #6aabdf;
+            --bg-primary: #0f1117;
+            --bg-secondary: #1a1d2e;
+            --bg-tertiary: #252837;
+            --text-primary: #ffffff;
+            --text-secondary: #b8bcc8;
+            --border-color: #2d3142;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --info: #60a5fa;
+        }
+
+        .dashboard {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            height: 40px;
+            filter: brightness(1.1);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .header-stat {
+            text-align: right;
+        }
+
+        .header-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--kollective-blue);
+        }
+
+        .header-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filters-section {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filters-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-select, .filter-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: var(--kollective-blue);
+            box-shadow: 0 0 0 3px rgba(83, 152, 210, 0.1);
+        }
+
+        .filter-select option {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .clear-filters-btn {
+            background: linear-gradient(135deg, var(--kollective-blue-dark), var(--kollective-blue));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clear-filters-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(83, 152, 210, 0.3);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border-left: 4px solid var(--kollective-blue);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .metric-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .metric-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .metric-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .metric-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .metric-trend.positive {
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--success);
+        }
+
+        .metric-trend.negative {
+            background: rgba(248, 113, 113, 0.1);
+            color: var(--danger);
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-header {
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .chart-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .table-section {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 250px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-tertiary);
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: var(--kollective-blue);
+        }
+
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.3;
+        }
+
+        th.sorted-asc::after {
+            content: ' ↑';
+            opacity: 1;
+            color: var(--kollective-blue);
+        }
+
+        th.sorted-desc::after {
+            content: ' ↓';
+            opacity: 1;
+            color: var(--kollective-blue);
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 14px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .quality-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 60px;
+        }
+
+        .quality-excellent {
+            background: rgba(74, 222, 128, 0.15);
+            color: var(--success);
+        }
+
+        .quality-good {
+            background: rgba(96, 165, 250, 0.15);
+            color: var(--info);
+        }
+
+        .quality-fair {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--warning);
+        }
+
+        .quality-poor {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--danger);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pagination-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--kollective-blue);
+            border-color: var(--kollective-blue);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: var(--kollective-blue);
+            border-color: var(--kollective-blue);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .header-stats {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Generate comprehensive mock data
+        const generateMockData = () => {
+            const manufacturers = ['Microsoft', 'Logitech', 'Poly', 'Jabra', 'Yealink', 'Cisco'];
+            const deviceNames = ['Surface Pro', 'ThinkPad X1', 'MacBook Pro', 'Dell Latitude', 'HP EliteBook', 'Lenovo Yoga'];
+            const locations = ['New York Office', 'London HQ', 'Tokyo Branch', 'San Francisco', 'Berlin', 'Singapore', 'Toronto', 'Sydney'];
+            const cities = ['New York', 'London', 'Tokyo', 'San Francisco', 'Berlin', 'Singapore', 'Toronto', 'Sydney', 'Mumbai', 'Paris'];
+            const countries = ['USA', 'UK', 'Japan', 'USA', 'Germany', 'Singapore', 'Canada', 'Australia', 'India', 'France'];
+            
+            const data = [];
+            const now = Date.now();
+            
+            for (let i = 0; i < 500; i++) {
+                const daysAgo = Math.floor(Math.random() * 30);
+                const timestamp = now - (daysAgo * 24 * 60 * 60 * 1000) - (Math.random() * 24 * 60 * 60 * 1000);
+                const manufacturer = manufacturers[Math.floor(Math.random() * manufacturers.length)];
+                const deviceName = deviceNames[Math.floor(Math.random() * deviceNames.length)];
+                const locationIndex = Math.floor(Math.random() * locations.length);
+                const cityIndex = Math.floor(Math.random() * cities.length);
+                
+                // Generate correlated quality scores
+                const baseQuality = 60 + Math.random() * 35;
+                const noise = () => -5 + Math.random() * 10;
+                
+                const videoQuality = Math.min(100, Math.max(0, baseQuality + noise()));
+                const audioQuality = Math.min(100, Math.max(0, baseQuality + noise()));
+                const vbssQuality = Math.min(100, Math.max(0, baseQuality + noise() - 5));
+                
+                // Network metrics (worse network = lower quality)
+                const networkQuality = (videoQuality + audioQuality) / 2;
+                const packetLoss = Math.max(0, (100 - networkQuality) / 10 + Math.random() * 2);
+                const jitter = Math.max(0, (100 - networkQuality) / 5 + Math.random() * 10);
+                const latency = Math.max(10, (100 - networkQuality) * 2 + Math.random() * 50);
+                
+                data.push({
+                    id: `call-${i + 1}`,
+                    timestamp: new Date(timestamp),
+                    upn: `user${i + 1}@company.com`,
+                    manufacturer,
+                    deviceName: `${manufacturer} ${deviceName}`,
+                    networkLocation: locations[locationIndex],
+                    city: cities[cityIndex],
+                    country: countries[cityIndex],
+                    videoQuality: parseFloat(videoQuality.toFixed(1)),
+                    audioQuality: parseFloat(audioQuality.toFixed(1)),
+                    vbssQuality: parseFloat(vbssQuality.toFixed(1)),
+                    packetLoss: parseFloat(packetLoss.toFixed(2)),
+                    jitter: parseFloat(jitter.toFixed(1)),
+                    latency: parseFloat(latency.toFixed(0)),
+                    duration: Math.floor(Math.random() * 120) + 10, // 10-130 minutes
+                    bandwidth: parseFloat((2 + Math.random() * 8).toFixed(2)), // 2-10 Mbps
+                });
+            }
+            
+            return data.sort((a, b) => b.timestamp - a.timestamp);
+        };
+
+        const Dashboard = () => {
+            const [data, setData] = useState([]);
+            const [filters, setFilters] = useState({
+                manufacturer: 'all',
+                upn: '',
+                deviceName: 'all',
+                networkLocation: 'all',
+                city: 'all',
+                country: 'all',
+                dateRange: 'all'
+            });
+            const [sortConfig, setSortConfig] = useState({ key: 'timestamp', direction: 'desc' });
+            const [currentPage, setCurrentPage] = useState(1);
+            const [searchTerm, setSearchTerm] = useState('');
+            const itemsPerPage = 20;
+
+            useEffect(() => {
+                setData(generateMockData());
+            }, []);
+
+            // Get unique filter values
+            const filterOptions = useMemo(() => ({
+                manufacturers: ['all', ...new Set(data.map(d => d.manufacturer))],
+                deviceNames: ['all', ...new Set(data.map(d => d.deviceName))],
+                networkLocations: ['all', ...new Set(data.map(d => d.networkLocation))],
+                cities: ['all', ...new Set(data.map(d => d.city))],
+                countries: ['all', ...new Set(data.map(d => d.country))]
+            }), [data]);
+
+            // Apply filters
+            const filteredData = useMemo(() => {
+                let filtered = data;
+
+                // Apply date range filter
+                if (filters.dateRange !== 'all') {
+                    const now = Date.now();
+                    const ranges = {
+                        '24h': 24 * 60 * 60 * 1000,
+                        '7d': 7 * 24 * 60 * 60 * 1000,
+                        '30d': 30 * 24 * 60 * 60 * 1000
+                    };
+                    const cutoff = now - ranges[filters.dateRange];
+                    filtered = filtered.filter(d => d.timestamp.getTime() > cutoff);
+                }
+
+                if (filters.manufacturer !== 'all') {
+                    filtered = filtered.filter(d => d.manufacturer === filters.manufacturer);
+                }
+
+                if (filters.deviceName !== 'all') {
+                    filtered = filtered.filter(d => d.deviceName === filters.deviceName);
+                }
+
+                if (filters.networkLocation !== 'all') {
+                    filtered = filtered.filter(d => d.networkLocation === filters.networkLocation);
+                }
+
+                if (filters.city !== 'all') {
+                    filtered = filtered.filter(d => d.city === filters.city);
+                }
+
+                if (filters.country !== 'all') {
+                    filtered = filtered.filter(d => d.country === filters.country);
+                }
+
+                if (filters.upn) {
+                    filtered = filtered.filter(d => 
+                        d.upn.toLowerCase().includes(filters.upn.toLowerCase())
+                    );
+                }
+
+                if (searchTerm) {
+                    filtered = filtered.filter(d =>
+                        Object.values(d).some(val =>
+                            String(val).toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                    );
+                }
+
+                return filtered;
+            }, [data, filters, searchTerm]);
+
+            // Sort data
+            const sortedData = useMemo(() => {
+                const sorted = [...filteredData];
+                sorted.sort((a, b) => {
+                    const aVal = a[sortConfig.key];
+                    const bVal = b[sortConfig.key];
+                    
+                    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                return sorted;
+            }, [filteredData, sortConfig]);
+
+            // Pagination
+            const paginatedData = useMemo(() => {
+                const start = (currentPage - 1) * itemsPerPage;
+                return sortedData.slice(start, start + itemsPerPage);
+            }, [sortedData, currentPage]);
+
+            const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+
+            // Calculate metrics
+            const metrics = useMemo(() => {
+                if (filteredData.length === 0) return null;
+
+                const avg = arr => arr.reduce((sum, val) => sum + val, 0) / arr.length;
+
+                return {
+                    totalCalls: filteredData.length,
+                    avgVideoQuality: avg(filteredData.map(d => d.videoQuality)).toFixed(1),
+                    avgAudioQuality: avg(filteredData.map(d => d.audioQuality)).toFixed(1),
+                    avgVBSSQuality: avg(filteredData.map(d => d.vbssQuality)).toFixed(1),
+                    avgPacketLoss: avg(filteredData.map(d => d.packetLoss)).toFixed(2),
+                    avgJitter: avg(filteredData.map(d => d.jitter)).toFixed(1),
+                    avgLatency: avg(filteredData.map(d => d.latency)).toFixed(0),
+                    avgDuration: avg(filteredData.map(d => d.duration)).toFixed(0),
+                    avgBandwidth: avg(filteredData.map(d => d.bandwidth)).toFixed(2)
+                };
+            }, [filteredData]);
+
+            const handleSort = (key) => {
+                setSortConfig(prev => ({
+                    key,
+                    direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+                }));
+                setCurrentPage(1);
+            };
+
+            const clearFilters = () => {
+                setFilters({
+                    manufacturer: 'all',
+                    upn: '',
+                    deviceName: 'all',
+                    networkLocation: 'all',
+                    city: 'all',
+                    country: 'all',
+                    dateRange: 'all'
+                });
+                setSearchTerm('');
+                setCurrentPage(1);
+            };
+
+            const getQualityClass = (value) => {
+                if (value >= 85) return 'quality-excellent';
+                if (value >= 70) return 'quality-good';
+                if (value >= 50) return 'quality-fair';
+                return 'quality-poor';
+            };
+
+            const getQualityLabel = (value) => {
+                if (value >= 85) return 'Excellent';
+                if (value >= 70) return 'Good';
+                if (value >= 50) return 'Fair';
+                return 'Poor';
+            };
+
+            // Chart data preparation
+            const chartData = useMemo(() => {
+                const sorted = [...filteredData].sort((a, b) => a.timestamp - b.timestamp);
+                const grouped = {};
+                
+                sorted.forEach(d => {
+                    const dateKey = d.timestamp.toLocaleDateString();
+                    if (!grouped[dateKey]) {
+                        grouped[dateKey] = {
+                            video: [],
+                            audio: [],
+                            vbss: [],
+                            packetLoss: [],
+                            jitter: [],
+                            latency: []
+                        };
+                    }
+                    grouped[dateKey].video.push(d.videoQuality);
+                    grouped[dateKey].audio.push(d.audioQuality);
+                    grouped[dateKey].vbss.push(d.vbssQuality);
+                    grouped[dateKey].packetLoss.push(d.packetLoss);
+                    grouped[dateKey].jitter.push(d.jitter);
+                    grouped[dateKey].latency.push(d.latency);
+                });
+
+                const labels = Object.keys(grouped);
+                const avg = arr => arr.reduce((sum, val) => sum + val, 0) / arr.length;
+
+                return {
+                    labels,
+                    video: labels.map(l => avg(grouped[l].video).toFixed(1)),
+                    audio: labels.map(l => avg(grouped[l].audio).toFixed(1)),
+                    vbss: labels.map(l => avg(grouped[l].vbss).toFixed(1)),
+                    packetLoss: labels.map(l => avg(grouped[l].packetLoss).toFixed(2)),
+                    jitter: labels.map(l => avg(grouped[l].jitter).toFixed(1)),
+                    latency: labels.map(l => avg(grouped[l].latency).toFixed(0))
+                };
+            }, [filteredData]);
+
+            useEffect(() => {
+                if (!metrics || chartData.labels.length === 0) return;
+
+                // Quality Scores Chart
+                const qualityCtx = document.getElementById('qualityChart');
+                if (qualityCtx) {
+                    const existingChart = Chart.getChart(qualityCtx);
+                    if (existingChart) existingChart.destroy();
+
+                    new Chart(qualityCtx, {
+                        type: 'line',
+                        data: {
+                            labels: chartData.labels,
+                            datasets: [
+                                {
+                                    label: 'Video Quality',
+                                    data: chartData.video,
+                                    borderColor: '#5398D2',
+                                    backgroundColor: 'rgba(83, 152, 210, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Audio Quality',
+                                    data: chartData.audio,
+                                    borderColor: '#4ade80',
+                                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'VBSS Quality',
+                                    data: chartData.vbss,
+                                    borderColor: '#fbbf24',
+                                    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#e0e0e0' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    ticks: { color: '#b8bcc8' },
+                                    grid: { color: '#2d3142' }
+                                },
+                                x: {
+                                    ticks: { color: '#b8bcc8' },
+                                    grid: { color: '#2d3142' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Network Performance Chart
+                const networkCtx = document.getElementById('networkChart');
+                if (networkCtx) {
+                    const existingChart = Chart.getChart(networkCtx);
+                    if (existingChart) existingChart.destroy();
+
+                    new Chart(networkCtx, {
+                        type: 'line',
+                        data: {
+                            labels: chartData.labels,
+                            datasets: [
+                                {
+                                    label: 'Packet Loss (%)',
+                                    data: chartData.packetLoss,
+                                    borderColor: '#f87171',
+                                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                                    tension: 0.4,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Jitter (ms)',
+                                    data: chartData.jitter,
+                                    borderColor: '#fbbf24',
+                                    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                                    tension: 0.4,
+                                    yAxisID: 'y1'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#e0e0e0' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    type: 'linear',
+                                    position: 'left',
+                                    beginAtZero: true,
+                                    ticks: { color: '#b8bcc8' },
+                                    grid: { color: '#2d3142' },
+                                    title: { display: true, text: 'Packet Loss (%)', color: '#b8bcc8' }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    position: 'right',
+                                    beginAtZero: true,
+                                    ticks: { color: '#b8bcc8' },
+                                    grid: { display: false },
+                                    title: { display: true, text: 'Jitter (ms)', color: '#b8bcc8' }
+                                },
+                                x: {
+                                    ticks: { color: '#b8bcc8' },
+                                    grid: { color: '#2d3142' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Latency Chart
+                const latencyCtx = document.getElementById('latencyChart');
+                if (latencyCtx) {
+                    const existingChart = Chart.getChart(latencyCtx);
+                    if (existingChart) existingChart.destroy();
+
+                    new Chart(latencyCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: chartData.labels,
+                            datasets: [{
+                                label: 'Average Latency (ms)',
+                                data: chartData.latency,
+                                backgroundColor: 'rgba(83, 152, 210, 0.7)',
+                                borderColor: '#5398D2',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#e0e0e0' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#b8bcc8' },
+                                    grid: { color: '#2d3142' }
+                                },
+                                x: {
+                                    ticks: { color: '#b8bcc8' },
+                                    grid: { color: '#2d3142' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Device Distribution Chart
+                const deviceCtx = document.getElementById('deviceChart');
+                if (deviceCtx) {
+                    const existingChart = Chart.getChart(deviceCtx);
+                    if (existingChart) existingChart.destroy();
+
+                    const deviceCounts = {};
+                    filteredData.forEach(d => {
+                        deviceCounts[d.manufacturer] = (deviceCounts[d.manufacturer] || 0) + 1;
+                    });
+
+                    new Chart(deviceCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(deviceCounts),
+                            datasets: [{
+                                data: Object.values(deviceCounts),
+                                backgroundColor: [
+                                    '#5398D2',
+                                    '#4ade80',
+                                    '#fbbf24',
+                                    '#f87171',
+                                    '#60a5fa',
+                                    '#a78bfa'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: { color: '#e0e0e0' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, [metrics, chartData, filteredData]);
+
+            if (data.length === 0) {
+                return <div className="loading">Loading dashboard data...</div>;
+            }
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <div className="logo-section">
+                            <img 
+                                src="https://kollective.com/wp-content/uploads/2023/11/Kollective-logo-white-1.svg" 
+                                alt="Kollective" 
+                                className="logo"
+                            />
+                            <div>
+                                <div className="title">Teams Call Quality Analytics</div>
+                                <div className="subtitle">Microsoft Graph API Performance Dashboard</div>
+                            </div>
+                        </div>
+                        <div className="header-stats">
+                            <div className="header-stat">
+                                <div className="header-stat-value">{filteredData.length}</div>
+                                <div className="header-stat-label">Total Calls</div>
+                            </div>
+                            <div className="header-stat">
+                                <div className="header-stat-value">{metrics?.avgVideoQuality || '-'}</div>
+                                <div className="header-stat-label">Avg Quality</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="filters-section">
+                        <div className="filters-header">
+                            <div className="filters-title">
+                                🔍 Filters
+                            </div>
+                            <button className="clear-filters-btn" onClick={clearFilters}>
+                                Clear All Filters
+                            </button>
+                        </div>
+                        <div className="filters-grid">
+                            <div className="filter-group">
+                                <label className="filter-label">Date Range</label>
+                                <select 
+                                    className="filter-select"
+                                    value={filters.dateRange}
+                                    onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+                                >
+                                    <option value="all">All Time</option>
+                                    <option value="24h">Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                </select>
+                            </div>
+                            <div className="filter-group">
+                                <label className="filter-label">Manufacturer</label>
+                                <select 
+                                    className="filter-select"
+                                    value={filters.manufacturer}
+                                    onChange={(e) => setFilters({...filters, manufacturer: e.target.value})}
+                                >
+                                    {filterOptions.manufacturers.map(m => (
+                                        <option key={m} value={m}>{m === 'all' ? 'All Manufacturers' : m}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="filter-group">
+                                <label className="filter-label">Device Name</label>
+                                <select 
+                                    className="filter-select"
+                                    value={filters.deviceName}
+                                    onChange={(e) => setFilters({...filters, deviceName: e.target.value})}
+                                >
+                                    {filterOptions.deviceNames.map(d => (
+                                        <option key={d} value={d}>{d === 'all' ? 'All Devices' : d}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="filter-group">
+                                <label className="filter-label">Network Location</label>
+                                <select 
+                                    className="filter-select"
+                                    value={filters.networkLocation}
+                                    onChange={(e) => setFilters({...filters, networkLocation: e.target.value})}
+                                >
+                                    {filterOptions.networkLocations.map(l => (
+                                        <option key={l} value={l}>{l === 'all' ? 'All Locations' : l}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="filter-group">
+                                <label className="filter-label">City</label>
+                                <select 
+                                    className="filter-select"
+                                    value={filters.city}
+                                    onChange={(e) => setFilters({...filters, city: e.target.value})}
+                                >
+                                    {filterOptions.cities.map(c => (
+                                        <option key={c} value={c}>{c === 'all' ? 'All Cities' : c}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="filter-group">
+                                <label className="filter-label">Country</label>
+                                <select 
+                                    className="filter-select"
+                                    value={filters.country}
+                                    onChange={(e) => setFilters({...filters, country: e.target.value})}
+                                >
+                                    {filterOptions.countries.map(c => (
+                                        <option key={c} value={c}>{c === 'all' ? 'All Countries' : c}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="filter-group">
+                                <label className="filter-label">User (UPN)</label>
+                                <input 
+                                    type="text"
+                                    className="filter-input"
+                                    placeholder="Search by email..."
+                                    value={filters.upn}
+                                    onChange={(e) => setFilters({...filters, upn: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {metrics && (
+                        <>
+                            <div className="metrics-grid">
+                                <div className="metric-card">
+                                    <div className="metric-header">
+                                        <div>
+                                            <div className="metric-title">Video Quality</div>
+                                        </div>
+                                        <div className="metric-icon" style={{background: 'rgba(83, 152, 210, 0.15)', color: '#5398D2'}}>
+                                            📹
+                                        </div>
+                                    </div>
+                                    <div className="metric-value">{metrics.avgVideoQuality}</div>
+                                    <div className="metric-subtitle">Average Score (0-100)</div>
+                                    <div className={`metric-trend ${parseFloat(metrics.avgVideoQuality) > 75 ? 'positive' : 'negative'}`}>
+                                        {parseFloat(metrics.avgVideoQuality) > 75 ? '↑' : '↓'} {parseFloat(metrics.avgVideoQuality) > 75 ? 'Excellent' : 'Needs Attention'}
+                                    </div>
+                                </div>
+
+                                <div className="metric-card">
+                                    <div className="metric-header">
+                                        <div>
+                                            <div className="metric-title">Audio Quality</div>
+                                        </div>
+                                        <div className="metric-icon" style={{background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80'}}>
+                                            🎤
+                                        </div>
+                                    </div>
+                                    <div className="metric-value">{metrics.avgAudioQuality}</div>
+                                    <div className="metric-subtitle">Average Score (0-100)</div>
+                                    <div className={`metric-trend ${parseFloat(metrics.avgAudioQuality) > 75 ? 'positive' : 'negative'}`}>
+                                        {parseFloat(metrics.avgAudioQuality) > 75 ? '↑' : '↓'} {parseFloat(metrics.avgAudioQuality) > 75 ? 'Excellent' : 'Needs Attention'}
+                                    </div>
+                                </div>
+
+                                <div className="metric-card">
+                                    <div className="metric-header">
+                                        <div>
+                                            <div className="metric-title">VBSS Quality</div>
+                                        </div>
+                                        <div className="metric-icon" style={{background: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24'}}>
+                                            🖥️
+                                        </div>
+                                    </div>
+                                    <div className="metric-value">{metrics.avgVBSSQuality}</div>
+                                    <div className="metric-subtitle">Screen Share Score</div>
+                                    <div className={`metric-trend ${parseFloat(metrics.avgVBSSQuality) > 70 ? 'positive' : 'negative'}`}>
+                                        {parseFloat(metrics.avgVBSSQuality) > 70 ? '↑' : '↓'} {parseFloat(metrics.avgVBSSQuality) > 70 ? 'Good' : 'Fair'}
+                                    </div>
+                                </div>
+
+                                <div className="metric-card">
+                                    <div className="metric-header">
+                                        <div>
+                                            <div className="metric-title">Packet Loss</div>
+                                        </div>
+                                        <div className="metric-icon" style={{background: 'rgba(248, 113, 113, 0.15)', color: '#f87171'}}>
+                                            📦
+                                        </div>
+                                    </div>
+                                    <div className="metric-value">{metrics.avgPacketLoss}%</div>
+                                    <div className="metric-subtitle">Average Loss Rate</div>
+                                    <div className={`metric-trend ${parseFloat(metrics.avgPacketLoss) < 1 ? 'positive' : 'negative'}`}>
+                                        {parseFloat(metrics.avgPacketLoss) < 1 ? '↓' : '↑'} {parseFloat(metrics.avgPacketLoss) < 1 ? 'Good' : 'High'}
+                                    </div>
+                                </div>
+
+                                <div className="metric-card">
+                                    <div className="metric-header">
+                                        <div>
+                                            <div className="metric-title">Jitter</div>
+                                        </div>
+                                        <div className="metric-icon" style={{background: 'rgba(96, 165, 250, 0.15)', color: '#60a5fa'}}>
+                                            📊
+                                        </div>
+                                    </div>
+                                    <div className="metric-value">{metrics.avgJitter}ms</div>
+                                    <div className="metric-subtitle">Average Jitter</div>
+                                    <div className={`metric-trend ${parseFloat(metrics.avgJitter) < 20 ? 'positive' : 'negative'}`}>
+                                        {parseFloat(metrics.avgJitter) < 20 ? '↓' : '↑'} {parseFloat(metrics.avgJitter) < 20 ? 'Low' : 'High'}
+                                    </div>
+                                </div>
+
+                                <div className="metric-card">
+                                    <div className="metric-header">
+                                        <div>
+                                            <div className="metric-title">Latency</div>
+                                        </div>
+                                        <div className="metric-icon" style={{background: 'rgba(168, 139, 250, 0.15)', color: '#a78bfa'}}>
+                                            ⚡
+                                        </div>
+                                    </div>
+                                    <div className="metric-value">{metrics.avgLatency}ms</div>
+                                    <div className="metric-subtitle">Average Round-Trip</div>
+                                    <div className={`metric-trend ${parseFloat(metrics.avgLatency) < 100 ? 'positive' : 'negative'}`}>
+                                        {parseFloat(metrics.avgLatency) < 100 ? '↓' : '↑'} {parseFloat(metrics.avgLatency) < 100 ? 'Fast' : 'Slow'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="charts-section">
+                                <div className="chart-card">
+                                    <div className="chart-header">
+                                        <div className="chart-title">Quality Scores Over Time</div>
+                                        <div className="chart-subtitle">Video, Audio, and VBSS performance trends</div>
+                                    </div>
+                                    <div className="chart-container">
+                                        <canvas id="qualityChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div className="chart-card">
+                                    <div className="chart-header">
+                                        <div className="chart-title">Device Distribution</div>
+                                        <div className="chart-subtitle">Calls by manufacturer</div>
+                                    </div>
+                                    <div className="chart-container">
+                                        <canvas id="deviceChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div className="chart-card">
+                                    <div className="chart-header">
+                                        <div className="chart-title">Network Performance</div>
+                                        <div className="chart-subtitle">Packet loss and jitter trends</div>
+                                    </div>
+                                    <div className="chart-container">
+                                        <canvas id="networkChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div className="chart-card">
+                                    <div className="chart-header">
+                                        <div className="chart-title">Latency Analysis</div>
+                                        <div className="chart-subtitle">Round-trip time measurements</div>
+                                    </div>
+                                    <div className="chart-container">
+                                        <canvas id="latencyChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    <div className="table-section">
+                        <div className="table-header">
+                            <div className="table-title">Detailed Call Records</div>
+                            <div className="table-controls">
+                                <input
+                                    type="text"
+                                    className="search-box"
+                                    placeholder="Search all fields..."
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {sortedData.length === 0 ? (
+                            <div className="no-data">
+                                <div className="no-data-icon">🔍</div>
+                                <div>No data matches the current filters</div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th className={`sortable ${sortConfig.key === 'timestamp' ? `sorted-${sortConfig.direction}` : ''}`} 
+                                                    onClick={() => handleSort('timestamp')}>Timestamp</th>
+                                                <th className={`sortable ${sortConfig.key === 'upn' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('upn')}>UPN</th>
+                                                <th className={`sortable ${sortConfig.key === 'manufacturer' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('manufacturer')}>Manufacturer</th>
+                                                <th className={`sortable ${sortConfig.key === 'deviceName' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('deviceName')}>Device</th>
+                                                <th className={`sortable ${sortConfig.key === 'city' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('city')}>City</th>
+                                                <th className={`sortable ${sortConfig.key === 'country' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('country')}>Country</th>
+                                                <th className={`sortable ${sortConfig.key === 'videoQuality' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('videoQuality')}>Video</th>
+                                                <th className={`sortable ${sortConfig.key === 'audioQuality' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('audioQuality')}>Audio</th>
+                                                <th className={`sortable ${sortConfig.key === 'vbssQuality' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('vbssQuality')}>VBSS</th>
+                                                <th className={`sortable ${sortConfig.key === 'packetLoss' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('packetLoss')}>Packet Loss</th>
+                                                <th className={`sortable ${sortConfig.key === 'jitter' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('jitter')}>Jitter</th>
+                                                <th className={`sortable ${sortConfig.key === 'latency' ? `sorted-${sortConfig.direction}` : ''}`}
+                                                    onClick={() => handleSort('latency')}>Latency</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paginatedData.map(record => (
+                                                <tr key={record.id}>
+                                                    <td>{record.timestamp.toLocaleString()}</td>
+                                                    <td>{record.upn}</td>
+                                                    <td>{record.manufacturer}</td>
+                                                    <td>{record.deviceName}</td>
+                                                    <td>{record.city}</td>
+                                                    <td>{record.country}</td>
+                                                    <td>
+                                                        <span className={`quality-badge ${getQualityClass(record.videoQuality)}`}>
+                                                            {record.videoQuality}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`quality-badge ${getQualityClass(record.audioQuality)}`}>
+                                                            {record.audioQuality}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`quality-badge ${getQualityClass(record.vbssQuality)}`}>
+                                                            {record.vbssQuality}
+                                                        </span>
+                                                    </td>
+                                                    <td>{record.packetLoss}%</td>
+                                                    <td>{record.jitter}ms</td>
+                                                    <td>{record.latency}ms</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="pagination">
+                                    <div className="pagination-info">
+                                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedData.length)} of {sortedData.length} records
+                                    </div>
+                                    <div className="pagination-buttons">
+                                        <button
+                                            className="pagination-btn"
+                                            onClick={() => setCurrentPage(1)}
+                                            disabled={currentPage === 1}
+                                        >
+                                            First
+                                        </button>
+                                        <button
+                                            className="pagination-btn"
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            Previous
+                                        </button>
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                        <button
+                                            className="pagination-btn"
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            Next
+                                        </button>
+                                        <button
+                                            className="pagination-btn"
+                                            onClick={() => setCurrentPage(totalPages)}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            Last
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
