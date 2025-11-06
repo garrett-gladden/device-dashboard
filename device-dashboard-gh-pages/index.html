@@ -947,8 +947,7 @@
                                     grid: { color: '#2d3142' }
                                 }
                             }
-                        }
-                    });
+                        });
                 }
 
                 // Device Distribution Chart
@@ -1000,16 +999,33 @@
                 <div className="dashboard">
                     <div className="header">
                         <div className="logo-section">
-                            <img 
-                                src="https://kollective.com/wp-content/uploads/2023/11/Kollective-logo-white-1.svg" 
-                                alt="Kollective" 
+                            <svg
                                 className="logo"
-                            />
-                            <div>
-                                <div className="title">Teams Call Quality Analytics</div>
-                                <div className="subtitle">Microsoft Graph API Performance Dashboard</div>
-                            </div>
-                        </div>
+                                viewBox="0 0 320 40"
+                                role="img"
+                                aria-label="Kollective logo"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <title>Kollective</title>
+                                <g fill="none" fillRule="evenodd">
+                                    <circle cx="18" cy="20" r="16" fill="#5398D2" />
+                                    <text
+                                        x="44"
+                                        y="26"
+                                        fontFamily="Segoe UI, Roboto, Arial, sans-serif"
+                                        fontSize="16"
+                                        fontWeight="700"
+                                        fill="#FFFFFF"
+                                    >
+                                        Kollective
+                                    </text>
+                                </g>
+                            </svg>
+                             <div>
+                                 <div className="title">Teams Call Quality Analytics</div>
+                                 <div className="subtitle">Microsoft Graph API Performance Dashboard</div>
+                             </div>
+                         </div>
                         <div className="header-stats">
                             <div className="header-stat">
                                 <div className="header-stat-value">{filteredData.length}</div>
